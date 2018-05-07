@@ -1,4 +1,4 @@
-import com.sun.tools.classfile.Dependencies
+import org.jetbrains.dokka.gradle.DokkaTask
 
 /*
  * Copyright (c) 2015-2018, Virgil Security, Inc.
@@ -33,6 +33,66 @@ import com.sun.tools.classfile.Dependencies
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+group = "com.virgilsecurity"
+version = "5.0.1-SNAPSHOT"
+
+buildscript {
+    ext {
+        kotlinVersion = "1.2.41"
+        dokkaVersion = "0.9.16"
+    }
+
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+
+        // Dokka
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion"
+    }
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'maven'
+apply plugin: 'org.jetbrains.dokka'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    jcenter()
+}
+
 dependencies {
-    implementation("dsadas:dsada:$Dependencie.Versions.kotlin")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+}
+
+task dokkaJavadoc(type: DokkaTask) {
+    outputFormat = "html"
+    outputDirectory = "$buildDir/javadoc"
+}
+
+// Tasks settings
+
+task dokkaJar (type: Jar, dependsOn: dokkaJavadoc) {
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    description = "Assembles Kotlin docs with Dokka"
+    classifier = "javadoc"
+    from "$buildDir/javadoc"
+}
+
+task sourcesJar (type: Jar) {
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    description = "Assembles sources JAR"
+    classifier = "sources"
+    from sourceSets.main.allSource
+}
+
+// Kotlin target jvm
+
+artifacts {
+    add("archives", dokkaJar)
+    add("archives", sourcesJar)
 }
