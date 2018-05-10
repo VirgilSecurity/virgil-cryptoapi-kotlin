@@ -1,0 +1,144 @@
+/*
+ * Copyright (c) 2015-2018, Virgil Security, Inc.
+ *
+ * Lead Maintainer: Virgil Security Inc. <support@virgilsecurity.com>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     (1) Redistributions of source code must retain the above copyright notice, this
+ *     list of conditions and the following disclaimer.
+ *
+ *     (2) Redistributions in binary form must reproduce the above copyright notice,
+ *     this list of conditions and the following disclaimer in the documentation
+ *     and/or other materials provided with the distribution.
+ *
+ *     (3) Neither the name of virgil nor the names of its
+ *     contributors may be used to endorse or promote products derived from
+ *     this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+ext {
+    repoName = "virgil"
+    groupId = "com.virgilsecurity"
+    artifactId = "cryptoapi"
+    libVersion = "5.0.2" + (Boolean.valueOf(System.getProperty("snapshot")) ? "-SNAPSHOT" : "")
+}
+
+version = libVersion
+group = groupId
+
+bintray {
+    if (System.getenv("bintrayUser") != null)
+        user = System.getenv("bintrayUser")
+    else
+        user = System.getProperty("bintrayUser")
+
+    if (!System.getenv("bintrayApiKey") != null)
+        key = System.getenv("bintrayApiKey")
+    else
+        user = System.getProperty("bintrayApiKey")
+
+    configurations = ['archives']
+    publish = false
+    override = false
+
+    pkg {
+        repo = repoName
+        name = artifactId
+
+        version {
+            name = libVersion
+        }
+    }
+}
+
+install {
+    repositories.mavenInstaller {
+        pom.project {
+            packaging 'jar'
+            groupId groupId
+            artifactId artifactId
+            version libVersion
+            name artifactId
+        }
+    }
+}
+
+task dokkaJar (type: Jar, dependsOn: dokkaJavadoc) {
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    description = "Assembles Kotlin docs with Dokka"
+    classifier = "javadoc"
+    from "$buildDir/javadoc"
+}
+
+task sourcesJar (type: Jar) {
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    description = "Assembles sources JAR"
+    classifier = "sources"
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives dokkaJar
+    archives sourcesJar
+}
+
+//bintray {
+//    user = System.getenv("bintrayUser")
+//    key = System.getenv("bintrayApiKey")
+//    publications = ['CryptoApiPublication']
+//
+//    pkg {
+//        repo = "maven"
+//        name = "virgil-cryptoapi"
+//        userOrg = "Virgil Security"
+//        licenses = ["BSD 3-Clause"]
+//        vcsUrl = "https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin.git"
+//
+//        websiteUrl = 'https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin'
+//        issueTrackerUrl = 'https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin/issues'
+//        labels = ['virgil', 'virgil-cryptoapi', 'java','kotlin', 'android', 'maven', 'crypto', 'cryptography', 'encryption']
+//
+//        githubRepo = 'VirgilSecurity/virgil-cryptoapi-kotlin'
+//        githubReleaseNotesFile = 'README.md'
+//
+//        version {
+//            name = libVersion
+//            desc = 'Virgil crypto API 5.0.1-SNAPSHOT'
+//            released  = new Date()
+//
+//            gpg {
+//                sign = true
+//            }
+//        }
+//    }
+//}
+//
+//publishing {
+//    publications {
+//        CryptoApiPublication(MavenPublication) {
+//            from components.java
+//            groupId 'com.virgilsecurity'
+//            artifactId 'cryptoapi'
+//            version libVersion
+//        }
+//    }
+//}

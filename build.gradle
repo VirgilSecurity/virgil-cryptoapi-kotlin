@@ -1,5 +1,3 @@
-import org.jetbrains.dokka.gradle.DokkaTask
-
 /*
  * Copyright (c) 2015-2018, Virgil Security, Inc.
  *
@@ -33,13 +31,13 @@ import org.jetbrains.dokka.gradle.DokkaTask
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-group = "com.virgilsecurity"
-version = "5.0.1-SNAPSHOT"
+import org.jetbrains.dokka.gradle.DokkaTask
 
 buildscript {
     ext {
         kotlinVersion = "1.2.41"
         dokkaVersion = "0.9.16"
+        bintrayVersion = "1.8.0"
     }
 
     repositories {
@@ -52,11 +50,13 @@ buildscript {
 
         // Dokka
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion"
+
+        // Bintray
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintrayVersion"
     }
 }
 
 apply plugin: 'kotlin'
-apply plugin: 'maven'
 apply plugin: 'org.jetbrains.dokka'
 
 repositories {
@@ -74,25 +74,4 @@ task dokkaJavadoc(type: DokkaTask) {
     outputDirectory = "$buildDir/javadoc"
 }
 
-// Tasks settings
-
-task dokkaJar (type: Jar, dependsOn: dokkaJavadoc) {
-    group = JavaBasePlugin.DOCUMENTATION_GROUP
-    description = "Assembles Kotlin docs with Dokka"
-    classifier = "javadoc"
-    from "$buildDir/javadoc"
-}
-
-task sourcesJar (type: Jar) {
-    group = JavaBasePlugin.DOCUMENTATION_GROUP
-    description = "Assembles sources JAR"
-    classifier = "sources"
-    from sourceSets.main.allSource
-}
-
-// Kotlin target jvm
-
-artifacts {
-    add("archives", dokkaJar)
-    add("archives", sourcesJar)
-}
+apply from: "deploy.gradle"
