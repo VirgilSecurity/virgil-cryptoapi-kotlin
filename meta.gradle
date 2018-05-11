@@ -31,47 +31,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-apply plugin: 'kotlin'
-
-apply from: "deploy.gradle"
+apply from: "utils.gradle"
 
 ext {
-    // Dependencies versions
-    kotlinVersion = "1.2.41"
-    dokkaVersion = "0.9.16"
-    bintrayVersion = "1.8.0"
-}
-buildscript {
-    ext {
-        // Dependencies versions
-        kotlinVersion = "1.2.41"
-        dokkaVersion = "0.9.16"
-        bintrayVersion = "1.8.0"
-    }
+    // Lib metadata
+    repoName = "virgil"
+    groupId = "com.virgilsecurity"
+    artifactId = "cryptoapi"
 
-    repositories {
-        mavenCentral()
-        jcenter()
-    }
+    snapshot = getSystemProperty("snapshot")
 
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    libVersion = "5.0.2" + (Boolean.valueOf(snapshot) ? "-SNAPSHOT" : "")
 
-        // Dokka
-        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion"
-
-        // Bintray
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintrayVersion"
-    }
-}
-
-repositories {
-    mavenCentral()
-    mavenLocal()
-    jcenter()
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+    libDescription = "Virgil Crypto API can be used to implement Crypto library for Virgil SDK"
 }

@@ -31,47 +31,30 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+def getSystemProperty(propertyName) {
+    def snapshot
 
-apply plugin: 'kotlin'
+    if (System.getenv(propertyName) != null)
+        snapshot = System.getenv(propertyName)
+    else if (System.getProperty(propertyName) != null)
+        snapshot = System.getProperty(propertyName)
+    else
+        throw new IllegalArgumentException("Property " + propertyName + " is not set")
 
-apply from: "deploy.gradle"
+    return snapshot
+}
+
+private def getPropertiesFromConfig() {
+//    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+//        String line;
+//        while ((line = br.readLine()) != null) {
+//            // process the line.
+//        }
+//    } catch (Exception e) {
+//
+//    } // TODO place properties one for line like "key=value" then split those line by line
+}
 
 ext {
-    // Dependencies versions
-    kotlinVersion = "1.2.41"
-    dokkaVersion = "0.9.16"
-    bintrayVersion = "1.8.0"
-}
-buildscript {
-    ext {
-        // Dependencies versions
-        kotlinVersion = "1.2.41"
-        dokkaVersion = "0.9.16"
-        bintrayVersion = "1.8.0"
-    }
-
-    repositories {
-        mavenCentral()
-        jcenter()
-    }
-
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-
-        // Dokka
-        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion"
-
-        // Bintray
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintrayVersion"
-    }
-}
-
-repositories {
-    mavenCentral()
-    mavenLocal()
-    jcenter()
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+    getSystemProperty = this.&getSystemProperty
 }

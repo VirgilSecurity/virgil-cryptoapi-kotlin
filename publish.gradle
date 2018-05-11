@@ -31,47 +31,58 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+apply plugin: 'maven-publish'
 
-apply plugin: 'kotlin'
+// Import meta data
+apply from: "meta.gradle"
 
-apply from: "deploy.gradle"
-
-ext {
-    // Dependencies versions
-    kotlinVersion = "1.2.41"
-    dokkaVersion = "0.9.16"
-    bintrayVersion = "1.8.0"
-}
-buildscript {
-    ext {
-        // Dependencies versions
-        kotlinVersion = "1.2.41"
-        dokkaVersion = "0.9.16"
-        bintrayVersion = "1.8.0"
+def pomConfig = {
+    licenses {
+        license {
+            name "BSD 3-Clause License"
+            url "https://opensource.org/licenses/BSD-3-Clause"
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id "BuddahLD"
+            name "Danylo Oliinyk"
+            email "doliinyk@virgilsecurity.com"
+        }
     }
 
-    repositories {
-        mavenCentral()
-        jcenter()
-    }
-
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-
-        // Dokka
-        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion"
-
-        // Bintray
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintrayVersion"
+    scm {
+        url "https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin"
     }
 }
 
-repositories {
-    mavenCentral()
-    mavenLocal()
-    jcenter()
-}
+publishing {
+    publications {
+        mavenPublication(MavenPublication) {
+            from components.java
+            artifact sourcesJar {
+                group = JavaBasePlugin.DOCUMENTATION_GROUP
+                description = "Assembles sources JAR"
+                classifier "sources"
+            }
+            artifact dokkaJar {
+                group = JavaBasePlugin.DOCUMENTATION_GROUP
+                description = "Assembles Kotlin docs with Dokka"
+                classifier "javadoc"
+            }
 
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+            groupId groupId
+            artifactId artifactId
+            version libVersion
+
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', libDescription)
+                root.appendNode('name', 'Virgil Crypto API')
+                root.appendNode('url', 'https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin')
+                root.children().last() + pomConfig
+            }
+        }
+    }
 }

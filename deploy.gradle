@@ -32,31 +32,26 @@
  */
 
 apply plugin: 'maven'
-apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'org.jetbrains.dokka'
 
-ext {
-    repoName = "virgil"
-    groupId = "com.virgilsecurity"
-    artifactId = "cryptoapi"
-    libVersion = "5.0.2" + (Boolean.valueOf(System.getProperty("snapshot")) ? "-SNAPSHOT" : "")
-}
+// Import maven publish closure
+apply from: "publish.gradle"
+
+// Import meta data
+apply from: "meta.gradle"
+
+apply from: "utils.gradle"
 
 version = libVersion
 group = groupId
 
 bintray {
-    if (System.getenv("bintrayUser") != null)
-        user = System.getenv("bintrayUser")
-    else
-        user = System.getProperty("bintrayUser")
+    user = getSystemProperty("bintrayUser")
+    key = getSystemProperty("bintrayApiKey")
 
-    if (!System.getenv("bintrayApiKey") != null)
-        key = System.getenv("bintrayApiKey")
-    else
-        user = System.getProperty("bintrayApiKey")
-
-    configurations = ['archives']
+//    configurations = ['archives']
+    publications = ["mavenPublication"]
     publish = false
     override = false
 
@@ -64,8 +59,39 @@ bintray {
         repo = repoName
         name = artifactId
 
+        userOrg = "Virgil Security"
+        desc = libDescription
+        licenses = ["BSD 3-Clause"]
+
+        vcsUrl = "https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin.git"
+        websiteUrl = 'https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin'
+        issueTrackerUrl = 'https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin/issues'
+        labels = ['virgil', 'virgil-cryptoapi', 'java', 'kotlin', 'android', 'maven', 'crypto', 'cryptography', 'encryption']
+        githubRepo = 'VirgilSecurity/virgil-cryptoapi-kotlin'
+        githubReleaseNotesFile = 'README.md'
+        publicDownloadNumbers = true
+
         version {
             name = libVersion
+            released = new Date()
+
+            gpg {
+                sign = true
+                if (System.getenv("gpgPass") != null)
+                    passphrase = System.getenv("gpgPass")
+                else if (System.getProperty("gpgPass") != null)
+                    passphrase = System.getProperty("gpgPass")
+                else
+                    throw new IllegalArgumentException("No gpg password provided")
+            }
+
+            mavenCentralSync {
+                sync = false
+                user = 'userToken' //OSS user token: mandatory
+                password = 'paasword' //OSS user password: mandatory
+                close = '0'
+                //Optional property. By default the staging repository is closed and artifacts are released to Maven Central. You can optionally turn this behaviour off (by puting 0 as value) and release the version manually.
+            }
         }
     }
 }
@@ -82,14 +108,19 @@ install {
     }
 }
 
-task dokkaJar (type: Jar, dependsOn: dokkaJavadoc) {
+task dokkaJavadoc(type: DokkaTask) {
+    outputFormat = "html"
+    outputDirectory = "$buildDir/javadoc"
+}
+
+task dokkaJar(type: Jar, dependsOn: dokkaJavadoc) {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Assembles Kotlin docs with Dokka"
     classifier = "javadoc"
     from "$buildDir/javadoc"
 }
 
-task sourcesJar (type: Jar) {
+task sourcesJar(type: Jar) {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Assembles sources JAR"
     classifier = "sources"
@@ -100,45 +131,3 @@ artifacts {
     archives dokkaJar
     archives sourcesJar
 }
-
-//bintray {
-//    user = System.getenv("bintrayUser")
-//    key = System.getenv("bintrayApiKey")
-//    publications = ['CryptoApiPublication']
-//
-//    pkg {
-//        repo = "maven"
-//        name = "virgil-cryptoapi"
-//        userOrg = "Virgil Security"
-//        licenses = ["BSD 3-Clause"]
-//        vcsUrl = "https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin.git"
-//
-//        websiteUrl = 'https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin'
-//        issueTrackerUrl = 'https://github.com/VirgilSecurity/virgil-cryptoapi-kotlin/issues'
-//        labels = ['virgil', 'virgil-cryptoapi', 'java','kotlin', 'android', 'maven', 'crypto', 'cryptography', 'encryption']
-//
-//        githubRepo = 'VirgilSecurity/virgil-cryptoapi-kotlin'
-//        githubReleaseNotesFile = 'README.md'
-//
-//        version {
-//            name = libVersion
-//            desc = 'Virgil crypto API 5.0.1-SNAPSHOT'
-//            released  = new Date()
-//
-//            gpg {
-//                sign = true
-//            }
-//        }
-//    }
-//}
-//
-//publishing {
-//    publications {
-//        CryptoApiPublication(MavenPublication) {
-//            from components.java
-//            groupId 'com.virgilsecurity'
-//            artifactId 'cryptoapi'
-//            version libVersion
-//        }
-//    }
-//}
