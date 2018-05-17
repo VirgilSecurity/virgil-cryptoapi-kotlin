@@ -40,8 +40,12 @@ ext {
     artifactId = "cryptoapi"
 
     snapshot = getSystemProperty("snapshot")
-
     libVersion = "5.0.2" + (Boolean.valueOf(snapshot) ? "-SNAPSHOT" : "")
+    buildNumber = '' + new Random(System.currentTimeMillis()).nextInt(20000)
 
     libDescription = "Virgil Crypto API can be used to implement Crypto library for Virgil SDK"
+
+    // Because of issue with 'resolve' closure
+    bintrayUser = getSystemProperty("bintrayUser")
+    bintrayApiKey = getSystemProperty("artifactoryApiKey")
 }

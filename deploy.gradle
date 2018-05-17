@@ -31,8 +31,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+
 apply plugin: 'maven'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: "com.jfrog.artifactory"
 apply plugin: 'org.jetbrains.dokka'
 
 // Import maven publish closure
@@ -47,10 +50,9 @@ version = libVersion
 group = groupId
 
 bintray {
-    user = getSystemProperty("bintrayUser")
-    key = getSystemProperty("bintrayApiKey")
+    user = bintrayUser
+    key = bintrayApiKey
 
-//    configurations = ['archives']
     publications = ["mavenPublication"]
     publish = false
     override = false
@@ -59,7 +61,7 @@ bintray {
         repo = repoName
         name = artifactId
 
-        userOrg = "Virgil Security"
+        userOrg = "buddahld"
         desc = libDescription
         licenses = ["BSD 3-Clause"]
 
@@ -77,23 +79,52 @@ bintray {
 
             gpg {
                 sign = true
-                if (System.getenv("gpgPass") != null)
-                    passphrase = System.getenv("gpgPass")
-                else if (System.getProperty("gpgPass") != null)
-                    passphrase = System.getProperty("gpgPass")
-                else
-                    throw new IllegalArgumentException("No gpg password provided")
+                passphrase = getSystemProperty("gpgPass")
             }
 
             mavenCentralSync {
-                sync = false
-                user = 'userToken' //OSS user token: mandatory
-                password = 'paasword' //OSS user password: mandatory
-                close = '0'
-                //Optional property. By default the staging repository is closed and artifacts are released to Maven Central. You can optionally turn this behaviour off (by puting 0 as value) and release the version manually.
+                sync = Boolean.valueOf(getSystemProperty("syncWithMaven"))
+                user = getSystemProperty("mavenUser")
+                password = getSystemProperty("mavenPassword")
+                close = getSystemProperty("autoReleaseToMavenCentral")
             }
         }
     }
+}
+
+artifactory {
+    contextUrl = "https://oss.jfrog.org/artifactory"
+    publish {
+        repository {
+            repoKey = "oss-snapshot-local"
+            username = bintrayUser
+            password = bintrayApiKey
+            maven = true
+        }
+
+        defaults {
+            publications["mavenPublication"]
+            publishArtifacts = true
+            publishPom = true
+
+            properties = [
+                    'build.number': buildNumber,
+                    'build.name'  : artifactId + "-" + libVersion
+            ]
+        }
+    }
+
+    resolve {
+        repository {
+            repoKey = "libs-snapshot"
+            username = bintrayUser
+            password = bintrayApiKey
+            maven = true
+        }
+    }
+
+    clientConfig.info.setBuildNumber(buildNumber)
+    clientConfig.info.setBuildNumber(artifactId + "-" + libVersion)
 }
 
 install {
@@ -108,12 +139,12 @@ install {
     }
 }
 
-task dokkaJavadoc(type: DokkaTask) {
+dokka {
     outputFormat = "html"
     outputDirectory = "$buildDir/javadoc"
 }
 
-task dokkaJar(type: Jar, dependsOn: dokkaJavadoc) {
+task dokkaJar(type: Jar, dependsOn: dokka) {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Assembles Kotlin docs with Dokka"
     classifier = "javadoc"

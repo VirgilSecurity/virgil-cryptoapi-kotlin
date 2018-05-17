@@ -32,27 +32,31 @@
  */
 
 def getSystemProperty(propertyName) {
-    def snapshot
+    def property
 
     if (System.getenv(propertyName) != null)
-        snapshot = System.getenv(propertyName)
+        property = System.getenv(propertyName)
     else if (System.getProperty(propertyName) != null)
-        snapshot = System.getProperty(propertyName)
+        property = System.getProperty(propertyName)
+    else if (getPropertyFromConfig(propertyName) != null)
+        property = getPropertyFromConfig(propertyName)
     else
         throw new IllegalArgumentException("Property " + propertyName + " is not set")
 
-    return snapshot
+    return property
 }
 
-private def getPropertiesFromConfig() {
-//    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-//        String line;
-//        while ((line = br.readLine()) != null) {
-//            // process the line.
-//        }
-//    } catch (Exception e) {
-//
-//    } // TODO place properties one for line like "key=value" then split those line by line
+private def getPropertyFromConfig(propertyName) {
+    def property = null
+
+    file("${rootDir}/.buildconfig")
+            .readLines()
+            .each { String line ->
+        if (line.split('=')[0] == propertyName)
+            property = line.split('=')[1]
+    }
+
+    return property
 }
 
 ext {
